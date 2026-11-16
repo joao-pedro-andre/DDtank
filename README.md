@@ -59,3 +59,15 @@ Os índices correspondem às distâncias inteiras de 1 a 20.
 ## Observação
 
 Os resultados são recomendações iniciais baseadas nas regras e na tabela fornecidas. Terreno, obstáculos, altura e particularidades do servidor podem exigir testes e ajustes manuais.
+
+## Modo janela compacta (1366 × 768)
+
+A página tem um botão **Janela compacta** no cabeçalho. Clique nele para abrir uma segunda janela de aproximadamente 390 × 740 pixels, com os resultados em destaque e menos elementos auxiliares.
+
+Para usar lado a lado:
+1. Coloque o DDTank em modo janela.
+2. Abra a calculadora no navegador e clique em **Janela compacta**.
+3. Posicione as duas janelas como preferir.
+4. Se quiser manter a calculadora visível sobre o jogo, use Microsoft PowerToys > Always On Top (atalho padrão `Win + Ctrl + T`).
+
+**Limitação:** os atalhos de teclado da página só funcionam enquanto a janela da calculadora estiver em foco. Eles não capturam teclas globais enquanto o DDTank está ativo. Para isso, será necessário um aplicativo auxiliar Windows na próxima etapa.
