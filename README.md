@@ -55,8 +55,10 @@ Foi adicionada a pasta `windows-overlay/` com um primeiro aplicativo auxiliar pa
 
 - Janela pequena, semitransparente e sempre no topo.
 - Captura da tela usando MSS.
-- Calibração visual: arraste o mouse sobre a região do ângulo, vento ou distância para indicar onde o programa deve procurar o número.
-- Leitura experimental desses campos por OCR (Tesseract).
+- Calibração visual das regiões do ângulo, vento, minimapa e barra de força.
+- Leitura experimental do ângulo e intensidade do vento por OCR (Tesseract).
+- Detecção experimental dos marcadores azul/vermelho do minimapa e estimativa da distância horizontal pela grade (cada quadrícula = 10 unidades).
+- Detecção experimental do marcador vermelho da barra de força, com escala linear provisória de 0 a 100.
 - Atalho global `F8` para mostrar/ocultar e `F9` para calibrar o ângulo.
 - Configuração salva localmente em `config.json`.
 
@@ -66,7 +68,10 @@ Foi adicionada a pasta `windows-overlay/` com um primeiro aplicativo auxiliar pa
 2. Instale o Tesseract OCR para Windows: https://github.com/UB-Mannheim/tesseract/wiki
 3. Entre na pasta `windows-overlay` e execute `instalar.bat`.
 4. Execute `iniciar.bat`.
-5. Clique em **Calibrar** e selecione a pequena região que contém o número do ângulo. Repita para vento/distância somente se esses números estiverem visíveis na tela.
+5. Clique em **Calibrar** e selecione a região do número do ângulo.
+6. Calibre o vento selecionando o número da intensidade.
+7. Para distância, selecione o minimapa completo, incluindo os marcadores azul/vermelho e as linhas da grade.
+8. Para força, selecione a barra inteira, incluindo o marcador vermelho e a escala.
 
 ### Limitações importantes do protótipo
 
