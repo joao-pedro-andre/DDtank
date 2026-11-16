@@ -26,8 +26,7 @@ DEFAULTS = {"regions": {}, "poll_ms": 650, "always_on_top": True}
 FIELDS = {
     "angle": ("ÂNGULO", "Número exibido no medidor circular"),
     "wind": ("VENTO", "Intensidade numérica, se estiver visível"),
-    "distance": ("DISTÂNCIA", "Distância calculada pelo minimapa, quando calibrado"),
-    "minimap": ("MINIMAPA", "Selecione a área completa com os marcadores azul e vermelho"),
+    "distance": ("DISTÂNCIA", "Selecione o minimapa completo para localizar azul e vermelho"),
     "power": ("FORÇA", "Selecione a barra inteira, incluindo o marcador vermelho"),
 }
 
@@ -55,7 +54,7 @@ class Overlay:
     def _build(self):
         r = self.root
         r.title("DDTank Helper")
-        r.geometry("300x210+20+100")
+        r.geometry("320x250+20+100")
         r.resizable(False, False)
         r.attributes("-topmost", bool(self.cfg.get("always_on_top", True)))
         r.attributes("-alpha", 0.94)
@@ -210,7 +209,7 @@ class Overlay:
             shot = sct.grab(region)
             img = Image.frombytes("RGB", shot.size, shot.rgb)
 
-        if key == "minimap":
+        if key == "distance":
             result = detect_minimap(img)
             if result["distance"] is None:
                 return "?"
@@ -228,7 +227,7 @@ class Overlay:
         raw = pytesseract.image_to_string(
             img, config="--psm 7 -c tessedit_char_whitelist=0123456789.,"
         )
-        match = re.search(r"\\d+(?:[.,]\\d+)?", raw.replace(" ", ""))
+        match = re.search(r"\d+(?:[.,]\d+)?", raw.replace(" ", ""))
         return match.group(0).replace(",", ".") if match else "?"
 
     def refresh(self):
