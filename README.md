@@ -104,3 +104,11 @@ Para usar lado a lado:
 4. Se quiser manter a calculadora visível sobre o jogo, use Microsoft PowerToys > Always On Top (atalho padrão `Win + Ctrl + T`).
 
 **Limitação:** os atalhos da página web só funcionam enquanto a janela da calculadora estiver em foco. O aplicativo Windows da V2 é o caminho para captura e atalhos globais.
+
+### Correção de leituras instáveis (novembro/2026)
+
+- O overlay agora exige 3 amostras próximas antes de confirmar um valor.
+- Leituras muito diferentes são tratadas como instáveis; a última leitura validada é mantida por até 1,5 segundo.
+- O caractere `?` foi substituído por estados claros: `Aguardando`, `Lendo...`, `Estabilizando` e `Não detectado`.
+- Limites básicos são verificados para ângulo (0–180) e vento (0–5).
+- Isso reduz oscilações causadas por ruído, mas não corrige sozinho uma região de captura mal selecionada nem torna os detectores de minimapa/força calibrados.
