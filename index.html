@@ -73,12 +73,6 @@
 (() => {
   const compactMode = new URLSearchParams(location.search).get("compact") === "1";
   if (compactMode) document.body.classList.add("compact");
-  $("compactWindow").addEventListener("click", () => {
-    const url = new URL(location.href);
-    url.searchParams.set("compact", "1");
-    const popup = window.open(url.toString(), "DDTankCalculatorCompact", "popup=yes,width=390,height=740,resizable=yes,scrollbars=yes");
-    if (!popup) alert("O navegador bloqueou a janela. Permita pop-ups para este site e tente novamente.");
-  });
   const tables = {
     "20":[10,19,25,30,36,40,44,48,51,54,57,60,63,66,69,72,74,76,78,80],
     "30":[14,20,24,28,32,35,38,41,44,47,50,52,55,57,60,62,65,67,69,72],
@@ -90,6 +84,12 @@
   const $ = id => document.getElementById(id);
   let method = "full", direction = "favor";
   const fmt = n => Number(n).toLocaleString("pt-BR",{maximumFractionDigits:1});
+  $("compactWindow").addEventListener("click", () => {
+    const url = new URL(location.href);
+    url.searchParams.set("compact", "1");
+    const popup = window.open(url.toString(), "DDTankCalculatorCompact", "popup=yes,width=390,height=740,resizable=yes,scrollbars=yes");
+    if (!popup) alert("O navegador bloqueou a janela. Permita pop-ups para este site e tente novamente.");
+  });
   function calculate() {
     const distance = Math.max(0, Number($("distance").value)||0);
     const wind = Math.min(5,Math.max(0,Number($("wind").value)||0));
