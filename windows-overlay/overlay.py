@@ -204,23 +204,24 @@ class Overlay:
     def read_region(self, key):
         region = self.cfg.get("regions", {}).get(key)
         if not region:
-            return "—"
+            return None
         with mss.mss() as sct:
             shot = sct.grab(region)
             img = Image.frombytes("RGB", shot.size, shot.rgb)
 
         if key == "distance":
             result = detect_minimap(img)
-            if result["distance"] is None:
-                return "?"
-            return f'{result["distance"]:.1f}'
+            value = result.get("distance")
+            if value is None or not 0 <= value <= 100:
+                return None
+            return float(value)
 
         if key == "power":
             marker_x = detect_red_marker_x(img)
             if marker_x is None or img.width < 2:
-                return "?"
-            value = max(0, min(100, marker_x / (img.width - 1) * 100))
-            return f"{value:.0f}"
+                return None
+            # Ainda é uma estimativa provisória; não tratar como força calibrada.
+            return max(0.0, min(100.0, marker_x / (img.width - 1) * 100))
 
         img = ImageOps.autocontrast(img.convert("L").resize((img.width * 3, img.height * 3)))
         img = ImageEnhance.Contrast(img).enhance(2.0).filter(ImageFilter.SHARPEN)
@@ -228,22 +229,69 @@ class Overlay:
             img, config="--psm 7 -c tessedit_char_whitelist=0123456789.,"
         )
         match = re.search(r"\d+(?:[.,]\d+)?", raw.replace(" ", ""))
-        return match.group(0).replace(",", ".") if match else "?"
+        if not match:
+            return None
+        try:
+            value = float(match.group(0).replace(",", "."))
+        except ValueError:
+            return None
+        if key == "angle" and not 0 <= value <= 180:
+            return None
+        if key == "wind" and not 0 <= value <= 5:
+            return None
+        return value
 
     def refresh(self):
         if not self.running:
             return
+        # Só confirma uma leitura depois de 3 amostras próximas.
+        if not hasattr(self, "samples"):
+            from collections import deque
+            self.samples = {k: deque(maxlen=3) for k in FIELDS}
+            self.last_good = {k: None for k in FIELDS}
+            self.last_good_at = {k: 0 for k in FIELDS}
+        import time
+        now = time.monotonic()
+        tolerances = {"angle": 1.0, "wind": 0.15, "distance": 1.0, "power": 2.0}
         try:
             for key in FIELDS:
                 value = self.read_region(key)
-                suffix = "°" if key == "angle" and value not in ("—", "?") else ""
-                self.labels[key].config(text=value + suffix)
+                samples = self.samples[key]
+                if value is not None:
+                    samples.append(float(value))
+                else:
+                    samples.clear()
+
+                shown = "Aguardando" if key not in self.cfg.get("regions", {}) else "Lendo..."
+                if len(samples) == 3:
+                    spread = max(samples) - min(samples)
+                    if spread <= tolerances[key]:
+                        stable = sum(samples) / len(samples)
+                        self.last_good[key] = stable
+                        self.last_good_at[key] = now
+                        shown = f"{stable:.1f}" if key in ("wind", "distance") else f"{stable:.0f}"
+                    else:
+                        # Mantém a última leitura validada por pouco tempo; não oscila com ruído.
+                        if self.last_good[key] is not None and now - self.last_good_at[key] <= 1.5:
+                            stable = self.last_good[key]
+                            shown = f"{stable:.1f}" if key in ("wind", "distance") else f"{stable:.0f}"
+                        else:
+                            shown = "Estabilizando"
+                elif self.last_good[key] is not None and now - self.last_good_at[key] <= 1.5:
+                    stable = self.last_good[key]
+                    shown = f"{stable:.1f}" if key in ("wind", "distance") else f"{stable:.0f}"
+                elif key in self.cfg.get("regions", {}):
+                    shown = "Não detectado" if value is None else "Estabilizando"
+
+                suffix = "°" if key == "angle" and shown not in ("Aguardando", "Lendo...", "Não detectado", "Estabilizando") else ""
+                self.labels[key].config(text=shown + suffix)
+
             configured = sum(1 for k in FIELDS if k in self.cfg.get("regions", {}))
-            self.status.config(text=("Calibre as regiões para iniciar a leitura" if configured == 0
-                                     else f"Leitura experimental • {configured}/{len(FIELDS)} regiões calibradas"))
+            self.status.config(text=("Calibre as regiões para iniciar" if configured == 0
+                                     else f"Filtro de estabilidade • {configured}/{len(FIELDS)} regiões"))
         except Exception as exc:
-            self.status.config(text=f"Falha na captura/OCR: {str(exc)[:42]}")
-        self.root.after(max(350, int(self.cfg.get("poll_ms", 650))), self.refresh)
+            self.status.config(text=f"Falha na captura: {str(exc)[:42]}")
+        self.root.after(max(500, int(self.cfg.get("poll_ms", 650))), self.refresh)
 
     def close(self):
         self.running = False
