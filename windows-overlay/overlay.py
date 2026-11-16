@@ -55,7 +55,7 @@ class Overlay:
     def _build(self):
         r = self.root
         r.title("DDTank Helper")
-        r.geometry("320x250+20+100")
+        r.geometry("320x285+20+100")
         r.resizable(False, False)
         r.attributes("-topmost", bool(self.cfg.get("always_on_top", True)))
         r.attributes("-alpha", 0.94)
