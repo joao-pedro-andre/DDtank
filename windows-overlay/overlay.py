@@ -10,6 +10,7 @@ try:
     import mss
     from PIL import Image, ImageTk, ImageOps, ImageEnhance, ImageFilter
     import pytesseract
+    from vision import detect_minimap, detect_red_marker_x
 except ImportError as exc:
     raise SystemExit(f"Dependência ausente: {exc}. Execute instalar.bat primeiro.")
 
@@ -25,7 +26,9 @@ DEFAULTS = {"regions": {}, "poll_ms": 650, "always_on_top": True}
 FIELDS = {
     "angle": ("ÂNGULO", "Número exibido no medidor circular"),
     "wind": ("VENTO", "Intensidade numérica, se estiver visível"),
-    "distance": ("DISTÂNCIA", "Leitura experimental; minimapa ainda não automatizado"),
+    "distance": ("DISTÂNCIA", "Distância calculada pelo minimapa, quando calibrado"),
+    "minimap": ("MINIMAPA", "Selecione a área completa com os marcadores azul e vermelho"),
+    "power": ("FORÇA", "Selecione a barra inteira, incluindo o marcador vermelho"),
 }
 
 
@@ -205,13 +208,27 @@ class Overlay:
             return "—"
         with mss.mss() as sct:
             shot = sct.grab(region)
-            img = Image.frombytes("RGB", shot.size, shot.rgb).convert("L")
-        img = ImageOps.autocontrast(img.resize((img.width * 3, img.height * 3)))
+            img = Image.frombytes("RGB", shot.size, shot.rgb)
+
+        if key == "minimap":
+            result = detect_minimap(img)
+            if result["distance"] is None:
+                return "?"
+            return f'{result["distance"]:.1f}'
+
+        if key == "power":
+            marker_x = detect_red_marker_x(img)
+            if marker_x is None or img.width < 2:
+                return "?"
+            value = max(0, min(100, marker_x / (img.width - 1) * 100))
+            return f"{value:.0f}"
+
+        img = ImageOps.autocontrast(img.convert("L").resize((img.width * 3, img.height * 3)))
         img = ImageEnhance.Contrast(img).enhance(2.0).filter(ImageFilter.SHARPEN)
         raw = pytesseract.image_to_string(
             img, config="--psm 7 -c tessedit_char_whitelist=0123456789.,"
         )
-        match = re.search(r"\d+(?:[.,]\d+)?", raw.replace(" ", ""))
+        match = re.search(r"\\d+(?:[.,]\\d+)?", raw.replace(" ", ""))
         return match.group(0).replace(",", ".") if match else "?"
 
     def refresh(self):
@@ -224,7 +241,7 @@ class Overlay:
                 self.labels[key].config(text=value + suffix)
             configured = sum(1 for k in FIELDS if k in self.cfg.get("regions", {}))
             self.status.config(text=("Calibre as regiões para iniciar a leitura" if configured == 0
-                                     else f"Leitura experimental • {configured}/3 regiões calibradas"))
+                                     else f"Leitura experimental • {configured}/{len(FIELDS)} regiões calibradas"))
         except Exception as exc:
             self.status.config(text=f"Falha na captura/OCR: {str(exc)[:42]}")
         self.root.after(max(350, int(self.cfg.get("poll_ms", 650))), self.refresh)
