@@ -10,7 +10,8 @@ Calculadora web independente para auxiliar nos disparos do DDTank Clássico.
 - Direção do vento definida como **a favor** ou **contra** em relação à direção do disparo.
 - Ajuste manual de altura de -3 a +3 pontos de força.
 - Atalhos de teclado para operar sem depender tanto do mouse.
-- Histórico local dos últimos cálculos (apenas durante a sessão atual).
+- Registro manual do ângulo e da força realmente usados, comparados à recomendação.
+- Histórico local dos últimos tiros (apenas durante a sessão atual).
 
 ## Executar
 
@@ -23,7 +24,9 @@ Abra `index.html` diretamente no navegador. Não precisa instalar dependências,
 | `Alt + 1` a `Alt + 6` | Full, Semi-Full, 65°, 50°, 30°, 20° |
 | `Alt + D` | Focar distância |
 | `Alt + W` | Focar vento |
-| `Alt + F` | Focar força do Semi-Full |
+| `Alt + A` | Focar ângulo usado no jogo |
+| `Alt + F` | Focar força usada no jogo |
+| `Alt + S` | Focar força do Semi-Full |
 | `Alt + ←` | Vento contra |
 | `Alt + →` | Vento a favor |
 
