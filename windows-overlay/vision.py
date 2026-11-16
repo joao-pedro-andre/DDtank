@@ -66,10 +66,12 @@ def detect_minimap(image: Image.Image):
 
     # Linhas de grade: colunas com muitos pixels quase brancos.
     bright_cols = []
+    rgb_image = image.convert("RGB")
+    pixels = rgb_image.load()
     for x in range(w):
         count = 0
         for y in range(h):
-            r, g, b = image.convert("RGB").getpixel((x, y))
+            r, g, b = pixels[x, y]
             if min(r, g, b) >= 185 and max(r, g, b) - min(r, g, b) <= 35:
                 count += 1
         if count >= max(5, int(h * 0.28)):
