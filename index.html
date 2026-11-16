@@ -43,6 +43,13 @@
         <div class="field"><label for="height">AJUSTE DE ALTURA (força)</label><input id="height" type="number" min="-3" max="3" step="1" value="0"><span class="tiny">Positivo: alvo mais alto · Negativo: alvo mais baixo</span></div>
       </div>
       <div class="actions"><button class="primary" id="calculate">CALCULAR DISPARO ↗</button><button class="secondary" id="reset">Limpar</button></div>
+      <h2 style="margin-top:22px;margin-bottom:8px">REGISTRAR O QUE VOCÊ USOU NO JOGO</h2>
+      <p class="sub">Depois de ajustar a mira no DDTank, informe os valores reais para guardar no histórico.</p>
+      <div class="fields">
+        <div class="field"><label for="actualAngle">ÂNGULO USADO</label><input id="actualAngle" type="number" min="0" max="180" step="1" placeholder="Ex.: 83"></div>
+        <div class="field"><label for="actualForce">FORÇA USADA</label><input id="actualForce" type="number" min="0" max="100" step="1" placeholder="Ex.: 95"></div>
+      </div>
+      <div class="actions"><button class="secondary" id="recordShot" style="width:100%">REGISTRAR TIRO USADO ✓</button></div>
       <div class="help"><details><summary>Atalhos de teclado</summary><p><kbd>Alt</kbd> + <kbd>1</kbd> a <kbd>6</kbd>: selecionar Full, Semi-Full, 65°, 50°, 30° ou 20°.</p><p><kbd>Alt</kbd> + <kbd>D</kbd>: distância · <kbd>Alt</kbd> + <kbd>W</kbd>: vento · <kbd>Alt</kbd> + <kbd>F</kbd>: força Semi-Full.</p><p><kbd>Alt</kbd> + <kbd>←</kbd>/<kbd>→</kbd>: alternar vento contra/a favor. Os campos continuam editáveis normalmente.</p></details></div>
     </section>
     <aside class="panel result">
@@ -109,7 +116,15 @@
   $("methods").addEventListener("click",e=>{const b=e.target.closest("[data-method]");if(!b)return;method=b.dataset.method;document.querySelectorAll(".method").forEach(x=>x.classList.toggle("active",x===b));calculate();});
   $("windDirection").addEventListener("click",e=>{const b=e.target.closest("[data-dir]");if(!b)return;direction=b.dataset.dir;document.querySelectorAll("#windDirection button").forEach(x=>x.classList.toggle("active",x===b));calculate();});
   ["distance","wind","semiForce","height"].forEach(id=>$(id).addEventListener("input",calculate));
-  $("calculate").addEventListener("click",()=>addHistory(calculate()));
+  $("calculate").addEventListener("click",()=>{const r=calculate();$("actualAngle").value=r.angle;$("actualForce").value=r.force;});
+  $("recordShot").addEventListener("click",()=>{
+    const recommended=calculate();
+    const angle=$("actualAngle").value===""?recommended.angle:Number($("actualAngle").value);
+    const force=$("actualForce").value===""?recommended.force:Number($("actualForce").value);
+    const li=document.createElement("li");
+    li.textContent=labels[method].replace("ÂNGULO ","")+" · distância "+fmt(recommended.distance)+" · usado: "+angle+"° / força "+force+" (recomendado: "+recommended.angle+"° / "+recommended.force+")";
+    $("history").prepend(li);while($("history").children.length>5)$("history").lastElementChild.remove();
+  });
   $("reset").addEventListener("click",()=>{$("distance").value="";$("wind").value="0";$("height").value="0";$("semiForce").value="63";direction="favor";document.querySelectorAll("#windDirection button").forEach(x=>x.classList.toggle("active",x.dataset.dir===direction));calculate();$("distance").focus();});
   document.addEventListener("keydown",e=>{
     if(!e.altKey)return;
@@ -117,7 +132,9 @@
     if(/^[1-6]$/.test(key)){e.preventDefault();method=methods[Number(key)-1];document.querySelectorAll(".method").forEach(x=>x.classList.toggle("active",x.dataset.method===method));calculate();}
     else if(key==="d"){e.preventDefault();$("distance").focus();$("distance").select();}
     else if(key==="w"){e.preventDefault();$("wind").focus();$("wind").select();}
-    else if(key==="f"){e.preventDefault();$("semiForce").focus();$("semiForce").select();}
+    else if(key==="a"){e.preventDefault();$("actualAngle").focus();$("actualAngle").select();}
+    else if(key==="f"){e.preventDefault();$("actualForce").focus();$("actualForce").select();}
+    else if(key==="s"){e.preventDefault();$("semiForce").focus();$("semiForce").select();}
     else if(key==="arrowleft"||key==="arrowright"){e.preventDefault();direction=key==="arrowright"?"favor":"contra";document.querySelectorAll("#windDirection button").forEach(x=>x.classList.toggle("active",x.dataset.dir===direction));calculate();}
   });
   calculate();
