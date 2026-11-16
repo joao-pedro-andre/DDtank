@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>DDTank Calculator</title>
+  <style>
+    :root{color-scheme:dark;--bg:#080d19;--panel:#111a2b;--panel2:#17243a;--line:#293954;--text:#eef4ff;--muted:#91a3bf;--cyan:#55d8e8;--blue:#548cff;--gold:#ffc857;--green:#6be0a1;--danger:#ff7e8b}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#1d3655 0,transparent 55%),var(--bg);color:var(--text);font:15px/1.5 Inter,Segoe UI,system-ui,sans-serif;min-height:100vh}
+    .wrap{max-width:1120px;margin:auto;padding:28px 18px 48px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--cyan),var(--blue));display:grid;place-items:center;color:#07111d;font-weight:900;font-size:20px;box-shadow:0 8px 30px #55d8e833}.brand h1{font-size:20px;letter-spacing:.08em;margin:0}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}.pill{border:1px solid #31516a;color:var(--cyan);padding:6px 10px;border-radius:999px;font-size:12px;white-space:nowrap}
+    .layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(290px,.8fr);gap:18px}.panel{background:linear-gradient(180deg,#152239ed,#101827f2);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 18px 55px #0005}.panel h2{font-size:15px;letter-spacing:.04em;margin:0 0 16px}.sub{color:var(--muted);font-size:12px;margin-top:-10px;margin-bottom:16px}
+    .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:flex;flex-direction:column;gap:6px}.field label,.label{font-size:12px;color:var(--muted);font-weight:650;letter-spacing:.04em}.field input,.field select{width:100%;background:#0a1322;border:1px solid #30415d;border-radius:10px;padding:12px;color:var(--text);font:inherit;outline:none}.field input:focus,.field select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #55d8e81c}
+    .methods{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:8px 0 18px}.method{border:1px solid #30415d;background:#0d1728;color:#c6d4e8;border-radius:11px;padding:12px 8px;cursor:pointer;font-weight:750;transition:.15s}.method:hover{border-color:#5b789f}.method.active{background:linear-gradient(135deg,#1b4960,#263e70);border-color:var(--cyan);color:white;box-shadow:inset 0 0 0 1px #55d8e833}
+    .windrow{display:grid;grid-template-columns:1fr 1fr;gap:13px}.seg{display:flex;background:#0a1322;border:1px solid #30415d;border-radius:10px;padding:4px;gap:4px}.seg button{flex:1;border:0;border-radius:7px;background:transparent;color:var(--muted);padding:8px 5px;cursor:pointer;font-weight:650}.seg button.active{background:#263b58;color:white}
+    .actions{display:flex;gap:9px;margin-top:16px}.primary,.secondary{border:0;border-radius:10px;padding:11px 16px;font:inherit;font-weight:750;cursor:pointer}.primary{background:linear-gradient(100deg,var(--cyan),#7da9ff);color:#07111d;flex:1}.secondary{background:#24334b;color:#dbe7f8}.result{display:flex;flex-direction:column;gap:14px}.resultbox{background:linear-gradient(145deg,#102c3b,#172b4a);border:1px solid #3a6477;border-radius:15px;padding:17px}.resultbox .caption{font-size:11px;color:#a9c4d8;letter-spacing:.12em;font-weight:800}.numbers{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.num strong{font-size:42px;line-height:1.1;display:block;color:var(--green);font-variant-numeric:tabular-nums}.num span{font-size:12px;color:#afc2d7}.detail{display:grid;gap:9px}.detail div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #293954;padding-bottom:8px;font-size:13px}.detail span{color:var(--muted)}.detail b{text-align:right}.notice{border:1px solid #66532b;background:#2b2416;color:#f5d99a;padding:11px 12px;border-radius:11px;font-size:12px}.help{margin-top:18px}.help summary{cursor:pointer;color:#b9cbe3;font-weight:700}.help p,.help li{color:var(--muted);font-size:13px}.help kbd{background:#26354d;border:1px solid #405473;border-radius:5px;padding:2px 5px;color:#fff}.footer{color:#70839e;font-size:11px;text-align:center;margin-top:18px}.history{margin-top:18px}.history ol{padding-left:20px;color:#b8c8dc;font-size:12px}.history li{margin:5px 0}.tiny{font-size:11px;color:var(--muted)}.hidden{display:none!important}
+    @media(max-width:800px){.layout{grid-template-columns:1fr}.top{align-items:flex-start}.panel{padding:16px}}@media(max-width:440px){.fields,.windrow{grid-template-columns:1fr}.methods{grid-template-columns:repeat(2,1fr)}.brand h1{font-size:16px}.pill{font-size:10px}.numbers .num strong{font-size:36px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><div class="logo">D</div><div><h1>DDTANK CALCULATOR</h1><p>Calculadora rápida de disparos · Clássico</p></div></div>
+    <div class="pill">V1 · ATALHOS DE TECLADO</div>
+  </header>
+  <main class="layout">
+    <section class="panel">
+      <h2>CONFIGURAÇÃO DO DISPARO</h2>
+      <p class="sub">Preencha distância e vento. O resultado é atualizado automaticamente.</p>
+      <div class="fields">
+        <div class="field"><label for="distance">DISTÂNCIA (unidades)</label><input id="distance" type="number" min="1" max="20" step="0.1" value="12" inputmode="decimal"></div>
+        <div class="field"><label for="wind">INTENSIDADE DO VENTO</label><input id="wind" type="number" min="0" max="5" step="0.1" value="2.5" inputmode="decimal"></div>
+      </div>
+      <div style="margin-top:14px" class="field"><span class="label">DIREÇÃO DO VENTO EM RELAÇÃO AO SEU TIRO</span>
+        <div class="seg" id="windDirection"><button type="button" data-dir="favor" class="active">A favor →</button><button type="button" data-dir="contra">← Contra</button></div>
+      </div>
+      <h2 style="margin-top:22px;margin-bottom:8px">MÉTODO</h2>
+      <div class="methods" id="methods">
+        <button class="method active" data-method="full">FULL</button><button class="method" data-method="semi">SEMI-FULL</button><button class="method" data-method="65">65°</button><button class="method" data-method="50">50°</button><button class="method" data-method="30">30°</button><button class="method" data-method="20">20°</button>
+      </div>
+      <div class="fields">
+        <div class="field" id="semiForceWrap"><label for="semiForce">FORÇA SEMI-FULL (60–65)</label><input id="semiForce" type="number" min="60" max="65" step="1" value="63"></div>
+        <div class="field"><label for="height">AJUSTE DE ALTURA (força)</label><input id="height" type="number" min="-3" max="3" step="1" value="0"><span class="tiny">Positivo: alvo mais alto · Negativo: alvo mais baixo</span></div>
+      </div>
+      <div class="actions"><button class="primary" id="calculate">CALCULAR DISPARO ↗</button><button class="secondary" id="reset">Limpar</button></div>
+      <div class="help"><details><summary>Atalhos de teclado</summary><p><kbd>Alt</kbd> + <kbd>1</kbd> a <kbd>6</kbd>: selecionar Full, Semi-Full, 65°, 50°, 30° ou 20°.</p><p><kbd>Alt</kbd> + <kbd>D</kbd>: distância · <kbd>Alt</kbd> + <kbd>W</kbd>: vento · <kbd>Alt</kbd> + <kbd>F</kbd>: força Semi-Full.</p><p><kbd>Alt</kbd> + <kbd>←</kbd>/<kbd>→</kbd>: alternar vento contra/a favor. Os campos continuam editáveis normalmente.</p></details></div>
+    </section>
+    <aside class="panel result">
+      <h2>RESULTADO RECOMENDADO</h2>
+      <div class="resultbox"><div class="caption" id="resultMethod">ÂNGULO FULL</div><div class="numbers"><div class="num"><strong id="angleResult">83°</strong><span>ÂNGULO FINAL</span></div><div class="num"><strong id="forceResult">95</strong><span>FORÇA FINAL</span></div></div></div>
+      <div class="detail">
+        <div><span>Ângulo sem vento</span><b id="baseAngle">78°</b></div>
+        <div><span>Compensação do vento</span><b id="windAdjustment">+5°</b></div>
+        <div><span>Distância usada na tabela</span><b id="tableDistance">—</b></div>
+        <div><span>Ajuste de altura</span><b id="heightAdjustment">0</b></div>
+      </div>
+      <div class="notice" id="explanation">Exemplo: 90 − 12 + (2,5 × 2) = 83°.</div>
+      <div class="tiny">A calculadora oferece uma recomendação inicial. Terreno, obstáculos e diferenças de altura podem exigir ajuste dentro do jogo.</div>
+      <div class="history"><h2>ÚLTIMO CÁLCULO</h2><ol id="history"><li>Full · distância 12 · vento 2,5 a favor → 83° / força 95</li></ol></div>
+    </aside>
+  </main>
+  <div class="footer">DDTank Calculator · Projeto independente para uso pessoal · V1 inicial</div>
+</div>
+<script>
+(() => {
+  const tables = {
+    "20":[10,19,25,30,36,40,44,48,51,54,57,60,63,66,69,72,74,76,78,80],
+    "30":[14,20,24,28,32,35,38,41,44,47,50,52,55,57,60,62,65,67,69,72],
+    "50":[14,20,24,28,32,35,39,42,44,48,50,53,55,58,60,63,65,68,70,72],
+    "65":[13,20,26,31,37,41,44,48,53,56,58,61,64,67,70,73,76,79,82,85]
+  };
+  const methods = ["full","semi","65","50","30","20"];
+  const labels = {full:"ÂNGULO FULL",semi:"SEMI-FULL","65":"ÂNGULO 65°","50":"ÂNGULO 50°","30":"ÂNGULO 30°","20":"ÂNGULO 20°"};
+  const $ = id => document.getElementById(id);
+  let method = "full", direction = "favor";
+  const fmt = n => Number(n).toLocaleString("pt-BR",{maximumFractionDigits:1});
+  function calculate() {
+    const distance = Math.max(0, Number($("distance").value)||0);
+    const wind = Math.min(5,Math.max(0,Number($("wind").value)||0));
+    const height = Math.min(3,Math.max(-3,Number($("height").value)||0));
+    const sign = direction === "favor" ? 1 : -1;
+    let baseAngle, multiplier, force, tableDistance = "—";
+    if(method==="full"){baseAngle=90-distance;multiplier=2;force=95;}
+    else if(method==="semi"){baseAngle=90-distance*2;multiplier=2;force=Math.min(65,Math.max(60,Math.round(Number($("semiForce").value)||63)));}
+    else if(method==="20"){baseAngle=20;multiplier=0;force=tables["20"][Math.min(20,Math.max(1,Math.round(distance)))-1];tableDistance=Math.min(20,Math.max(1,Math.round(distance)));}
+    else {baseAngle=Number(method);multiplier=method==="30"?1:2;tableDistance=Math.min(20,Math.max(1,Math.round(distance)));force=tables[method][tableDistance-1];}
+    const rawWind = wind*multiplier*sign;
+    const angle = Math.round(baseAngle+rawWind);
+    force = Math.round(force+height);
+    $("resultMethod").textContent=labels[method];
+    $("angleResult").textContent=angle+"°";
+    $("forceResult").textContent=force;
+    $("baseAngle").textContent=fmt(baseAngle)+"°";
+    $("windAdjustment").textContent=(rawWind>0?"+":"")+fmt(rawWind)+(multiplier?"°":" (ignorado)");
+    $("tableDistance").textContent=tableDistance==="—"?"Não se aplica":tableDistance+" (arredondada)";
+    $("heightAdjustment").textContent=(height>0?"+":"")+height+" ponto(s)";
+    $("semiForceWrap").classList.toggle("hidden",method!=="semi");
+    if(method==="full") $("explanation").textContent="Full: 90 − distância + vento × 2. Força fixa 95. O vento a favor soma ao ângulo; contra subtrai.";
+    else if(method==="semi") $("explanation").textContent="Semi-Full: 90 − (distância × 2) + vento × 2. Força inicial "+force+" (editável entre 60 e 65).";
+    else if(method==="20") $("explanation").textContent="Ângulo 20°: vento ignorado. Força consultada na tabela da imagem para a distância arredondada.";
+    else $("explanation").textContent="Ângulo base "+method+"°; compensação de vento × "+multiplier+". Força consultada na tabela da imagem para a distância arredondada.";
+    return {angle,force,distance,wind};
+  }
+  function addHistory(r){
+    const li=document.createElement("li");
+    li.textContent=labels[method].replace("ÂNGULO ","")+" · dist. "+fmt(r.distance)+" · vento "+fmt(r.wind)+" "+(direction==="favor"?"a favor":"contra")+" → "+r.angle+"° / força "+r.force;
+    $("history").prepend(li);while($("history").children.length>5)$("history").lastElementChild.remove();
+  }
+  $("methods").addEventListener("click",e=>{const b=e.target.closest("[data-method]");if(!b)return;method=b.dataset.method;document.querySelectorAll(".method").forEach(x=>x.classList.toggle("active",x===b));calculate();});
+  $("windDirection").addEventListener("click",e=>{const b=e.target.closest("[data-dir]");if(!b)return;direction=b.dataset.dir;document.querySelectorAll("#windDirection button").forEach(x=>x.classList.toggle("active",x===b));calculate();});
+  ["distance","wind","semiForce","height"].forEach(id=>$(id).addEventListener("input",calculate));
+  $("calculate").addEventListener("click",()=>addHistory(calculate()));
+  $("reset").addEventListener("click",()=>{$("distance").value="";$("wind").value="0";$("height").value="0";$("semiForce").value="63";direction="favor";document.querySelectorAll("#windDirection button").forEach(x=>x.classList.toggle("active",x.dataset.dir===direction));calculate();$("distance").focus();});
+  document.addEventListener("keydown",e=>{
+    if(!e.altKey)return;
+    const key=e.key.toLowerCase();
+    if(/^[1-6]$/.test(key)){e.preventDefault();method=methods[Number(key)-1];document.querySelectorAll(".method").forEach(x=>x.classList.toggle("active",x.dataset.method===method));calculate();}
+    else if(key==="d"){e.preventDefault();$("distance").focus();$("distance").select();}
+    else if(key==="w"){e.preventDefault();$("wind").focus();$("wind").select();}
+    else if(key==="f"){e.preventDefault();$("semiForce").focus();$("semiForce").select();}
+    else if(key==="arrowleft"||key==="arrowright"){e.preventDefault();direction=key==="arrowright"?"favor":"contra";document.querySelectorAll("#windDirection button").forEach(x=>x.classList.toggle("active",x.dataset.dir===direction));calculate();}
+  });
+  calculate();
+})();
+</script>
+</body>
+</html>
