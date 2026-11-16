@@ -259,7 +259,7 @@ class Overlay:
             region = self.cfg.get("regions", {}).get(key)
             lines.append(f"===== {title} ({key}) =====")
             if not region:
-                lines.append("Região: NÃO CONFIGURADA\\n")
+                lines.append("Região: NÃO CONFIGURADA\n")
                 continue
             lines.append(f"Região: left={region.get('left')}, top={region.get('top')}, "
                          f"width={region.get('width')}, height={region.get('height')}")
@@ -293,7 +293,7 @@ class Overlay:
                     raw = pytesseract.image_to_string(
                         processed, config="--psm 7 -c tessedit_char_whitelist=0123456789.,")
                     lines.append(f"OCR bruto: {raw.strip()!r}")
-                    match = re.search(r"\\d+(?:[.,]\\d+)?", raw.replace(" ", ""))
+                    match = re.search(r"\d+(?:[.,]\d+)?", raw.replace(" ", ""))
                     lines.append(f"Número interpretado: {match.group(0) if match else 'nenhum'}")
                 elif key == "distance":
                     result = detect_minimap(img)
@@ -312,7 +312,7 @@ class Overlay:
                 lines.append(f"ERRO NA CAPTURA/ANÁLISE: {type(exc).__name__}: {exc}")
             lines.append("")
 
-        report = "\\n".join(lines)
+        report = "\n".join(lines)
         folder = BASE / "diagnostics"
         folder.mkdir(exist_ok=True)
         report_path = folder / "diagnostico.txt"
