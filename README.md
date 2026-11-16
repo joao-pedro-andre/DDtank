@@ -112,3 +112,20 @@ Para usar lado a lado:
 - O caractere `?` foi substituído por estados claros: `Aguardando`, `Lendo...`, `Estabilizando` e `Não detectado`.
 - Limites básicos são verificados para ângulo (0–180) e vento (0–5).
 - Isso reduz oscilações causadas por ruído, mas não corrige sozinho uma região de captura mal selecionada nem torna os detectores de minimapa/força calibrados.
+
+
+### Relatório local de diagnóstico (novembro/2026)
+
+O overlay Windows agora tem o botão **Executar diagnóstico**. Use-o depois de calibrar as quatro regiões e com o DDTank aberto na tela.
+
+O relatório mostra, para cada região:
+- dimensões e posição da área capturada;
+- proporção aproximada de pixels vermelhos, azuis e claros;
+- texto bruto reconhecido pelo OCR e número interpretado;
+- posição detectada dos marcadores do minimapa, espaçamento da grade e distância calculada;
+- posição do marcador vermelho e estimativa atual da força;
+- erros de captura ou regiões não configuradas.
+
+O relatório é salvo localmente em `windows-overlay/diagnostics/diagnostico.txt` e pode ser copiado pelo botão **Copiar relatório** na janela de diagnóstico. Cole o texto aqui para investigarmos os campos que falham. As imagens do jogo não são enviadas nem adicionadas ao repositório.
+
+**Importante:** o diagnóstico coleta uma amostra por região. Ele ajuda a localizar a origem do erro, mas não corrige automaticamente os detectores. A força continua sendo uma estimativa experimental.
