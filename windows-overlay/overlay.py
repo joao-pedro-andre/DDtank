@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import shutil
+from datetime import datetime
 from pathlib import Path
 import tkinter as tk
 
@@ -88,6 +89,9 @@ class Overlay:
         tk.Button(buttons, text="Configurações", command=self.settings, bg="#263a55", fg="white",
                   activebackground="#385578", bd=0, font=("Segoe UI", 9)).pack(
                       side="left", fill="x", expand=True, padx=(4, 0), ipady=5)
+        tk.Button(body, text="Executar diagnóstico", command=self.diagnose, bg="#3b345f", fg="white",
+                  activebackground="#51477c", bd=0, font=("Segoe UI", 9, "bold")).pack(
+                      fill="x", pady=(7, 0), ipady=5)
         tk.Label(body, text="F8: mostrar/ocultar  •  F9: calibrar ângulo", bg="#101827",
                  fg="#71839d", font=("Segoe UI", 7)).pack(anchor="w", pady=(6, 0))
 
@@ -240,6 +244,107 @@ class Overlay:
         if key == "wind" and not 0 <= value <= 5:
             return None
         return value
+
+
+    def diagnose(self):
+        """Captura uma amostra por região e mostra evidências brutas para depuração."""
+        lines = [
+            "DDTANK HELPER - RELATÓRIO DE DIAGNÓSTICO",
+            f"Data/hora: {datetime.now().astimezone().isoformat(timespec='seconds')}",
+            f"Resolução da tela: {self.root.winfo_screenwidth()}x{self.root.winfo_screenheight()}",
+            "As capturas são analisadas localmente; nenhuma imagem é enviada.",
+            ""
+        ]
+        for key, (title, _desc) in FIELDS.items():
+            region = self.cfg.get("regions", {}).get(key)
+            lines.append(f"===== {title} ({key}) =====")
+            if not region:
+                lines.append("Região: NÃO CONFIGURADA\\n")
+                continue
+            lines.append(f"Região: left={region.get('left')}, top={region.get('top')}, "
+                         f"width={region.get('width')}, height={region.get('height')}")
+            try:
+                with mss.mss() as sct:
+                    shot = sct.grab(region)
+                    img = Image.frombytes("RGB", shot.size, shot.rgb)
+                lines.append(f"Captura: {img.width}x{img.height}")
+                if img.width < 2 or img.height < 2:
+                    lines.append("ERRO: região muito pequena")
+                    continue
+
+                total = img.width * img.height
+                red = blue = bright = 0
+                for rr, gg, bb in img.getdata():
+                    mx, mn = max(rr, gg, bb), min(rr, gg, bb)
+                    if rr >= 90 and rr > gg * 1.35 and rr > bb * 1.25:
+                        red += 1
+                    if bb >= 75 and bb > rr * 1.20 and bb > gg * 1.10:
+                        blue += 1
+                    if mn >= 185 and mx - mn <= 35:
+                        bright += 1
+                lines.append(f"Pixels: vermelho={red} ({red/total:.1%}), "
+                             f"azul={blue} ({blue/total:.1%}), claros={bright} ({bright/total:.1%})")
+
+                if key in ("angle", "wind"):
+                    gray = img.convert("L")
+                    processed = ImageOps.autocontrast(
+                        gray.resize((img.width * 3, img.height * 3)))
+                    processed = ImageEnhance.Contrast(processed).enhance(2.0).filter(ImageFilter.SHARPEN)
+                    raw = pytesseract.image_to_string(
+                        processed, config="--psm 7 -c tessedit_char_whitelist=0123456789.,")
+                    lines.append(f"OCR bruto: {raw.strip()!r}")
+                    match = re.search(r"\\d+(?:[.,]\\d+)?", raw.replace(" ", ""))
+                    lines.append(f"Número interpretado: {match.group(0) if match else 'nenhum'}")
+                elif key == "distance":
+                    result = detect_minimap(img)
+                    lines.append(f"Marcador jogador (azul): {result.get('player')}")
+                    lines.append(f"Marcador alvo (vermelho): {result.get('target')}")
+                    lines.append(f"Espaçamento da grade (px): {result.get('grid_spacing_px')}")
+                    lines.append(f"Distância calculada: {result.get('distance')}")
+                else:
+                    marker = detect_red_marker_x(img)
+                    lines.append(f"Centro do marcador vermelho X: {marker}")
+                    if marker is not None:
+                        lines.append(f"Força estimada atual: {marker / (img.width - 1) * 100:.1f}")
+                    else:
+                        lines.append("Força estimada atual: não detectada")
+            except Exception as exc:
+                lines.append(f"ERRO NA CAPTURA/ANÁLISE: {type(exc).__name__}: {exc}")
+            lines.append("")
+
+        report = "\\n".join(lines)
+        folder = BASE / "diagnostics"
+        folder.mkdir(exist_ok=True)
+        report_path = folder / "diagnostico.txt"
+        report_path.write_text(report, encoding="utf-8")
+
+        win = tk.Toplevel(self.root)
+        win.title("Diagnóstico do reconhecimento")
+        win.geometry("680x560")
+        win.configure(bg="#101827")
+        win.attributes("-topmost", True)
+        tk.Label(win, text="Relatório gerado localmente", bg="#101827", fg="#77e6f2",
+                 font=("Segoe UI", 10, "bold")).pack(anchor="w", padx=12, pady=(10, 4))
+        tk.Label(win, text=f"Arquivo salvo em: {report_path}", bg="#101827", fg="#9eb0c9",
+                 wraplength=650, justify="left").pack(anchor="w", padx=12, pady=(0, 7))
+        area = tk.Text(win, wrap="word", bg="#0b1220", fg="#dce7f5",
+                       insertbackground="white", font=("Consolas", 9), height=25)
+        area.pack(fill="both", expand=True, padx=12, pady=4)
+        area.insert("1.0", report)
+        area.configure(state="disabled")
+
+        def copy_report():
+            self.root.clipboard_clear()
+            self.root.clipboard_append(report)
+            self.status.config(text="Relatório copiado; cole-o aqui na conversa")
+
+        buttons = tk.Frame(win, bg="#101827")
+        buttons.pack(fill="x", padx=12, pady=10)
+        tk.Button(buttons, text="Copiar relatório", command=copy_report, bg="#1e4960",
+                  fg="white", bd=0, padx=12, pady=7).pack(side="left")
+        tk.Button(buttons, text="Fechar", command=win.destroy, bg="#263a55",
+                  fg="white", bd=0, padx=12, pady=7).pack(side="right")
+        self.status.config(text="Diagnóstico salvo localmente")
 
     def refresh(self):
         if not self.running:
