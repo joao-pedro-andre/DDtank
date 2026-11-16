@@ -71,14 +71,16 @@ Foi adicionada a pasta `windows-overlay/` com um primeiro aplicativo auxiliar pa
 ### Limitações importantes do protótipo
 
 - O OCR ainda precisa ser calibrado e testado com uma captura real do jogo em 1366×768.
-- A distância do minimapa ainda **não** é calculada pela posição relativa dos personagens.
-- A força ainda **não** é medida pela barra gráfica.
+- A detecção de azul/vermelho e da grade é experimental; pode confundir elementos do cenário ou falhar se as cores/efeitos mudarem.
+- A distância estimada é horizontal e depende de o espaçamento da grade ser detectado corretamente.
+- A força usa uma conversão linear provisória entre as extremidades da região selecionada; precisa ser calibrada comparando com valores reais do jogo.
+- A direção do vento (seta para esquerda/direita) ainda não é reconhecida automaticamente.
 - A seleção automática do método e o cálculo integrado de recomendação ainda não foram ligados ao reconhecimento.
 - A leitura pode falhar dependendo da escala, animação, contraste ou posição dos elementos. Confira os valores antes de usar um tiro.
 - A janela fica no topo, mas ainda não é click-through; mova-a para uma área livre da tela. O F8 pode exigir permissões adicionais dependendo da configuração do Windows.
 - O projeto não envia comandos ao jogo, não movimenta a mira e não dispara automaticamente.
 
-Esta etapa estabelece a captura e a calibração das regiões. As próximas etapas dependem de uma imagem real da HUD para desenvolver e validar leitura da barra de força, vento e geometria do minimapa.
+Esta etapa adiciona os primeiros detectores visuais para minimapa e marcador da força. Ainda precisamos validar os resultados com o jogo aberto em 1366×768, ajustar a escala da força e desenvolver a leitura da direção do vento.
 
 ## Limitações das regras de cálculo
 
