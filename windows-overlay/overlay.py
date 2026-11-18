@@ -233,8 +233,8 @@ class Overlay:
             self.current_wind_direction = detect_wind_direction(img)
             if self.current_wind_direction is None or img.width < 8:
                 return None
-            # A intensidade fica no lado direito do ícone; evita OCR da seta.
-            img = img.crop((int(img.width * 0.42), 0, img.width, img.height))
+            # Inclui os dois algarismos coloridos; o ponto decimal pode ser vermelho.
+            img = img.crop((int(img.width * 0.10), 0, img.width, img.height))
         else:
             self.current_wind_direction = None
 
@@ -253,6 +253,12 @@ class Overlay:
         if key == "angle" and not 0 <= value <= 180:
             return None
         if key == "wind":
+            # O indicador usa uma casa decimal. Se o OCR perder o ponto,
+            # não aceite "17" como 1.7 nem "1" como 1.0.
+            decimal_match = re.search(r"\d+[.,]\d", raw.replace(" ", ""))
+            if not decimal_match:
+                return None
+            value = float(decimal_match.group(0).replace(",", "."))
             if not 0 <= value <= 5:
                 return None
             return round(value, 1)
@@ -302,8 +308,8 @@ class Overlay:
                     if key == "wind":
                         direction = detect_wind_direction(img)
                         lines.append(f"Direção da seta do vento atual: {direction or 'não detectada'}")
-                        # O OCR recebe apenas a metade numérica do ícone superior.
-                        ocr_source = img.crop((int(img.width * 0.42), 0, img.width, img.height))
+                        # Inclui os dois algarismos; o ponto decimal pode ser vermelho.
+                        ocr_source = img.crop((int(img.width * 0.10), 0, img.width, img.height))
                     else:
                         ocr_source = img
                     gray = ocr_source.convert("L")
@@ -313,8 +319,12 @@ class Overlay:
                     raw = pytesseract.image_to_string(
                         processed, config="--psm 7 -c tessedit_char_whitelist=0123456789.,")
                     lines.append(f"OCR bruto: {raw.strip()!r}")
-                    match = re.search(r"\d+(?:[.,]\d+)?", raw.replace(" ", ""))
-                    lines.append(f"Número interpretado: {match.group(0) if match else 'nenhum'}")
+                    if key == "wind":
+                        match = re.search(r"\d+[.,]\d", raw.replace(" ", ""))
+                        lines.append(f"Intensidade decimal interpretada: {match.group(0) if match else 'nenhuma (OCR precisa preservar a casa decimal)'}")
+                    else:
+                        match = re.search(r"\d+(?:[.,]\d+)?", raw.replace(" ", ""))
+                        lines.append(f"Número interpretado: {match.group(0) if match else 'nenhum'}")
                 elif key == "distance":
                     result = detect_minimap(img)
                     lines.append(f"Marcador jogador (azul): {result.get('player')}")
