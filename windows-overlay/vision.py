@@ -103,6 +103,54 @@ def detect_minimap(image: Image.Image):
     }
 
 
+
+def detect_wind_direction(image: Image.Image):
+    """Estima a direção da seta do indicador superior 'Força Vento'.
+
+    A calibração deve incluir somente a seta e o número do vento ATUAL,
+    excluindo o rótulo e, principalmente, a linha 'rod.ant.'.
+    Retorna 'left', 'right' ou None quando a evidência visual é fraca.
+    """
+    rgb = image.convert("RGB")
+    w, h = rgb.size
+    if w < 12 or h < 8:
+        return None
+
+    # A seta é clara/neutra; céu azul e dígitos coloridos ficam de fora.
+    mask = [[False] * w for _ in range(h)]
+    pixels = rgb.load()
+    for y in range(h):
+        for x in range(w):
+            r, g, b = pixels[x, y]
+            if min(r, g, b) >= 145 and max(r, g, b) - min(r, g, b) <= 65:
+                mask[y][x] = True
+
+    components = _components(mask, w, h, min_area=max(12, int(w * h * 0.025)))
+    if not components:
+        return None
+
+    # Use a maior massa clara, que deve ser o corpo da seta.
+    points = max(components, key=len)
+    xs = [p[0] for p in points]
+    x_min, x_max = min(xs), max(xs)
+    if x_max - x_min < w * 0.35:
+        return None
+
+    # A ponta da seta torna um dos lados do ícone visualmente mais preenchido.
+    # O recorte precisa conter o ícone inteiro e não deve incluir 'rod.ant.'.
+    column_counts = [sum(1 for x, _ in points if x == col) for col in range(x_min, x_max + 1)]
+    span = len(column_counts)
+    edge_width = max(2, int(span * 0.32))
+    left_mass = sum(column_counts[:edge_width])
+    right_mass = sum(column_counts[-edge_width:])
+    larger = max(left_mass, right_mass)
+    smaller = min(left_mass, right_mass)
+    if larger == 0 or (larger - smaller) / larger < 0.12:
+        return None
+
+    return "left" if left_mass > right_mass else "right"
+
+
 def detect_red_marker_x(image: Image.Image):
     """Retorna x do maior componente vermelho (marcador da barra de força)."""
     w, h = image.size
