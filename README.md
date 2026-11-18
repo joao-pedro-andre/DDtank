@@ -114,6 +114,17 @@ Para usar lado a lado:
 - Isso reduz oscilações causadas por ruído, mas não corrige sozinho uma região de captura mal selecionada nem torna os detectores de minimapa/força calibrados.
 
 
+
+### Reconhecimento dedicado do vento atual (branch experimental)
+
+- O campo de vento agora deve ser calibrado somente sobre o ícone superior **Força Vento**, incluindo seta e número.
+- A linha inferior **rod.ant.** é explicitamente excluída da região de captura.
+- A intensidade é lida na parte numérica do ícone; a direção é estimada separadamente pela distribuição de pixels claros da seta.
+- A leitura só aparece como válida após três amostras próximas e três detecções iguais de direção.
+- Se intensidade ou direção falhar, o campo mostra **Não detectado/Estabilizando** e não conserva o valor anterior como vento atual.
+- O detector é experimental e precisa ser testado com capturas do jogo apontando para os dois lados. A captura recebida mostra o indicador atual em 1.7 para a esquerda; ela ainda não comprova a classificação da seta para a direita.
+- Nenhuma dependência nova foi adicionada; a leitura continua local no Windows.
+
 ### Relatório local de diagnóstico (novembro/2026)
 
 O overlay Windows agora tem o botão **Executar diagnóstico**. Use-o depois de calibrar as quatro regiões e com o DDTank aberto na tela.
