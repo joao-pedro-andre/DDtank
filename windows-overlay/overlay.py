@@ -11,7 +11,7 @@ try:
     import mss
     from PIL import Image, ImageTk, ImageOps, ImageEnhance, ImageFilter
     import pytesseract
-    from vision import detect_minimap, detect_red_marker_x
+    from vision import detect_minimap, detect_red_marker_x, detect_wind_direction
 except ImportError as exc:
     raise SystemExit(f"Dependência ausente: {exc}. Execute instalar.bat primeiro.")
 
@@ -26,7 +26,7 @@ if not shutil.which("tesseract"):
 DEFAULTS = {"regions": {}, "poll_ms": 650, "always_on_top": True}
 FIELDS = {
     "angle": ("ÂNGULO", "Número exibido no medidor circular"),
-    "wind": ("VENTO", "Intensidade numérica, se estiver visível"),
+    "wind": ("VENTO ATUAL", "Selecione somente a seta e o número superiores de Força Vento; exclua rod.ant."),
     "distance": ("DISTÂNCIA", "Selecione o minimapa completo para localizar azul e vermelho"),
     "power": ("FORÇA", "Selecione a barra inteira, incluindo o marcador vermelho"),
 }
@@ -227,6 +227,17 @@ class Overlay:
             # Ainda é uma estimativa provisória; não tratar como força calibrada.
             return max(0.0, min(100.0, marker_x / (img.width - 1) * 100))
 
+        if key == "wind":
+            # A direção vem da seta do indicador superior. Se ela não for clara,
+            # a leitura inteira falha em vez de reaproveitar o vento anterior.
+            self.current_wind_direction = detect_wind_direction(img)
+            if self.current_wind_direction is None or img.width < 8:
+                return None
+            # A intensidade fica no lado direito do ícone; evita OCR da seta.
+            img = img.crop((int(img.width * 0.42), 0, img.width, img.height))
+        else:
+            self.current_wind_direction = None
+
         img = ImageOps.autocontrast(img.convert("L").resize((img.width * 3, img.height * 3)))
         img = ImageEnhance.Contrast(img).enhance(2.0).filter(ImageFilter.SHARPEN)
         raw = pytesseract.image_to_string(
@@ -286,9 +297,16 @@ class Overlay:
                              f"azul={blue} ({blue/total:.1%}), claros={bright} ({bright/total:.1%})")
 
                 if key in ("angle", "wind"):
-                    gray = img.convert("L")
+                    if key == "wind":
+                        direction = detect_wind_direction(img)
+                        lines.append(f"Direção da seta do vento atual: {direction or 'não detectada'}")
+                        # O OCR recebe apenas a metade numérica do ícone superior.
+                        ocr_source = img.crop((int(img.width * 0.42), 0, img.width, img.height))
+                    else:
+                        ocr_source = img
+                    gray = ocr_source.convert("L")
                     processed = ImageOps.autocontrast(
-                        gray.resize((img.width * 3, img.height * 3)))
+                        gray.resize((ocr_source.width * 3, ocr_source.height * 3)))
                     processed = ImageEnhance.Contrast(processed).enhance(2.0).filter(ImageFilter.SHARPEN)
                     raw = pytesseract.image_to_string(
                         processed, config="--psm 7 -c tessedit_char_whitelist=0123456789.,")
@@ -362,19 +380,36 @@ class Overlay:
             for key in FIELDS:
                 value = self.read_region(key)
                 samples = self.samples[key]
+                if key == "wind":
+                    if value is not None and self.current_wind_direction:
+                        self.wind_direction_samples.append(self.current_wind_direction)
+                    else:
+                        self.wind_direction_samples.clear()
+                        samples.clear()
+                        # Nunca mantenha o vento da rodada anterior como se fosse atual.
+                        self.last_good[key] = None
                 if value is not None:
                     samples.append(float(value))
-                else:
+                elif key != "wind":
                     samples.clear()
 
                 shown = "Aguardando" if key not in self.cfg.get("regions", {}) else "Lendo..."
                 if len(samples) == 3:
                     spread = max(samples) - min(samples)
-                    if spread <= tolerances[key]:
+                    direction_stable = (
+                        key != "wind" or
+                        (len(self.wind_direction_samples) == 3 and
+                         len(set(self.wind_direction_samples)) == 1)
+                    )
+                    if spread <= tolerances[key] and direction_stable:
                         stable = sum(samples) / len(samples)
                         self.last_good[key] = stable
                         self.last_good_at[key] = now
                         shown = f"{stable:.1f}" if key in ("wind", "distance") else f"{stable:.0f}"
+                        if key == "wind":
+                            shown += " " + ("←" if self.wind_direction_samples[-1] == "left" else "→")
+                    elif key == "wind":
+                        shown = "Estabilizando"
                     else:
                         # Mantém a última leitura validada por pouco tempo; não oscila com ruído.
                         if self.last_good[key] is not None and now - self.last_good_at[key] <= 1.5:
@@ -382,6 +417,8 @@ class Overlay:
                             shown = f"{stable:.1f}" if key in ("wind", "distance") else f"{stable:.0f}"
                         else:
                             shown = "Estabilizando"
+                elif key == "wind":
+                    shown = "Não detectado" if value is None else "Estabilizando"
                 elif self.last_good[key] is not None and now - self.last_good_at[key] <= 1.5:
                     stable = self.last_good[key]
                     shown = f"{stable:.1f}" if key in ("wind", "distance") else f"{stable:.0f}"
