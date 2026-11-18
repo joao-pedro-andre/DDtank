@@ -252,8 +252,10 @@ class Overlay:
             return None
         if key == "angle" and not 0 <= value <= 180:
             return None
-        if key == "wind" and not 0 <= value <= 5:
-            return None
+        if key == "wind":
+            if not 0 <= value <= 5:
+                return None
+            return round(value, 1)
         return value
 
 
@@ -371,6 +373,8 @@ class Overlay:
         if not hasattr(self, "samples"):
             from collections import deque
             self.samples = {k: deque(maxlen=3) for k in FIELDS}
+            self.wind_direction_samples = deque(maxlen=3)
+            self.current_wind_direction = None
             self.last_good = {k: None for k in FIELDS}
             self.last_good_at = {k: 0 for k in FIELDS}
         import time
