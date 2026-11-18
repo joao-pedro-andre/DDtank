@@ -148,8 +148,11 @@ class Overlay:
         photo = ImageTk.PhotoImage(display)
         canvas.create_image(0, 0, image=photo, anchor="nw")
         canvas.image = photo
-        canvas.create_text(20, screen_h - 28, anchor="w",
-                           text=f"Selecione a região de {FIELDS[key][0]} • ESC cancela",
+        instruction = (
+            "Selecione SOMENTE a seta e o número do indicador superior Força Vento; exclua rod.ant. • ESC cancela"
+            if key == "wind" else f"Selecione a região de {FIELDS[key][0]} • ESC cancela"
+        )
+        canvas.create_text(20, screen_h - 28, anchor="w", text=instruction,
                            fill="#ffff88", font=("Segoe UI", 14, "bold"))
         start = {}
         rect = None
